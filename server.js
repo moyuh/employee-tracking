@@ -1,8 +1,10 @@
 //call variables to use npm packages
 const express = require('express');
 const sql = require('mysql2');
-const consoleTable = require('console.table');
 const inquirer = require('inquirer');
+const consoleTable = require('console.table');
+//call table variables
+
 
 //localhost
 const PORT = process.env.PORT || 3001;
