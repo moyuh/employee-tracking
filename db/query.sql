@@ -12,4 +12,4 @@ UPDATE employee SET role_id = 3 WHERE id = 7;
 UPDATE employee SET ? WHERE ?;
 
 -- Deletes:
-DELETE FROM department WHERE id = 13;
+DELETE FROM employee WHERE id = 13;

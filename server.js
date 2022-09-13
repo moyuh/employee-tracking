@@ -35,13 +35,14 @@ db.connect(function(err){
     getManagers(); 
 });
 
+//run initial prompting to decide next set of prompts
 startApp = () => {
     inquirer
     .prompt({
         name: "choices",
         type: "list",
         message: "Choose one of the following options:",
-        choices: ["ADD EMPLOYEE", "ADD DEPARTMENT","ADD ROLE", "VIEW ALL EMPLOYEES", "VIEW ALL ROLES", "VIEW ALL DEPARTMENTS","UPDATE EMPLOYEE ROLE", "DELETE OPTIONS", "QUIT"]
+        choices: ["ADD EMPLOYEE", "ADD DEPARTMENT","ADD ROLE", "VIEW ALL EMPLOYEES", "VIEW ALL ROLES", "VIEW ALL DEPARTMENTS","UPDATE EMPLOYEE ROLE", "DELETE EMPLOYEE", "QUIT"]
     })
     .then(function(answer){
         if(answer.choices === "ADD EMPLOYEE"){
@@ -56,9 +57,54 @@ startApp = () => {
         else if(answer.choices === "VIEW ALL EMPLOYEES"){
             viewEmpl();
         }
+        else if(answer.choices === "VIEW ALL ROLES") {
+            viewRoles();
+        }
+        else if(answer.choices === "VIEW ALL DEPARTMENTS"){
+            viewDept();
+        }
+        else if(answer.choices === "UPDATE EMPLOYEE ROLE"){
+            updateEmpRole();
+        }
+        else if(answer.choices === "DELETE EMPLOYEE"){
+            deleteEmp();
+        }
+    })
+};
+//get calls:
+getEmployee = () => {
+    db.query('SELECT id, CONCAT_WS(" ", first_name, last_name) AS employee_name FROM employee', (err, res) => {
+        if (err) throw err;
+        employee = res;
+        consoleTable(employee);
     })
 };
 
+getRoles = () => {
+    db.query('SELECT id, title FROM role', (err, res) => {
+        if (err) throw err;
+        roles = res;
+        consoleTable(roles);
+    })
+};
+
+getDept = () => {
+    db.query('SELECT id, dept_name FROM department', (err, res) => {
+        if (err) throw err;
+        departments = res;
+        consoleTable(departments);
+    })
+};
+
+getManagers = () => {
+    db.query('SELECT id, first_name, last_name, CONCAT_WS(" ", first_name, last_name) AS managers FROM employee', (err, res) => {
+        if (err) throw err;
+        managers = res;
+        consoleTable(managers);
+    })
+};
+
+//adds
 addEmployee = () => {
     getRoles();
     getManagers();
@@ -119,11 +165,12 @@ addDepartment = () => {
         db.query(`INSERT INTO department (dept_name) VALUES ('${answer.dept_name}')`, (err, res)=> {
             if(err) throw err;
             console.log(`New Department: ${answer.dept_name}`);
-            getDeptartments();
+            getDept();
             startApp();
         })
     })
 };
+
 addRole = () => {
     let departmentOptions = [];
     for (let i = 0; i < departments.length; i++) {
@@ -161,12 +208,127 @@ addRole = () => {
         })
     })
 };
-
+//views
 viewEmpl = () => {
     db.query(`SELECT employee.id, employee.first_name, employee_lastname, department.dept_name AS department, role.title, role.salary, CONCAT_WS(" ", manager.first_name, manager.last_name) AS manager FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY employee.id ASC`, (err, res) => {
-        if (err) throw err;
+        if (err) throw err
         console.log(err || result);
-        showTable(res);
+        
         startApp();
     });
+};
+
+viewRoles = () => {
+   db.query(`SELECT role.id, role.title, role.salary, department.dept_name as Department_Name FROM role INNER JOIN department ON role.department_id = department.id`, (err, res)=> {
+    if (err) throw err
+    console.log(err || result);
+    
+    startApp();
+   });
+};
+
+viewDept = () => {
+    db.query("SELECT * FROM department", (err, res) => {
+        if (err) throw err
+        console.log(err || results);
+        
+        startApp();
+    });
+};
+
+//updates
+updateEmpRole = () => {
+    let employeeOptions = [];
+    for (let i = 0; i < employee.length; i++) {
+        employeeOptions.push(Object(employee[i]));    
+    }
+    inquirer
+    .prompt([
+        {
+            name: "updateRole",
+            type: "list",
+            message: "Choose the employee that you wish to update the role:",
+            choices: function() {
+                let choiceArr = [];
+                for (let i = 0; i < employeeOptions.length; i++) {
+                choiceArr.push(employeeOptions[i].employee_name);   
+                }
+                return choiceArr;
+            }
+        }
+
+    ]).then(answer => {
+        let roleOptions = [];
+        for (let i = 0; i < roles.length; i++) {
+           roleOptions.push(Object(roles[i]));  
+        };
+        for (let i = 0; i < employeeOptions.length; i++) {
+            if(employeeOptions[i].employee_name === answer.updateRole) {
+                employeeSelected = employeeOptions[i].id
+            }   
+        }
+        inquirer
+        .prompt([
+            {
+                name: "updatedRole",
+                type: "list",
+                message: "Choose the updated role from the following:",
+                choices: function(){
+                    let choiceArr = [];
+                    for (let i = 0; i < roleOptions.length; i++) {
+                       choiceArr.push(roleOptions[i].title)   
+                    }
+                    return choiceArr;
+                }
+            }
+        ]).then(answer =>{
+            for (let i = 0; i < roleOptions.length; i++) {
+                if (answer.updatedRole === roleOptions[i].title) {
+                    newRole = roleOptions[i].id
+                    db.query(`UPDATE employee SET role_id =${newRole} WHERE id = ${employeeSelected}`), (err, res) =>{
+                        if (err) throw err;
+                    };
+                } 
+            }
+            console.log("Role updated (:");
+            getEmployee();
+            getRoles();
+            startApp();
+        })
+    })
+};
+
+//delete employee -- most used deletion 
+deleteEmp = () => {
+    let employeeOptions = [];
+    for (let i = 0; i < employee.length; i++) {
+        employeeOptions.push(Object(employee[i])); 
+    }
+    inquirer
+    .prompt([
+        {
+            name: "deleteEmp",
+            type: "list",
+            message: "Select following employee to DELETE:",
+            choices: function () {
+                let choiceArr = [];
+                for (let i = 0; i < employeeOptions.length; i++) {
+                   choiceArr.push(employeeOptions[i].employee_name)  
+                }
+                return choiceArr;
+            }   
+        }
+    ]).then(answer => {
+        for (let i = 0; i < employeeOptions.length; i++) {
+           if(answer.deleteEmp === employeeOptions[i].employee_name) {
+            deletedEmp = employeeOptions[i].id
+            db.query(`DELETE FROM employee WHERE id = ${deletedEmp}`), (err,res) => {
+                if (err) throw err;
+            };
+            console.log(`${answer.deleteEmp} has been successfully eliminated`);
+           }   
+        }
+        getEmployee();
+        startApp();
+    })
 };
