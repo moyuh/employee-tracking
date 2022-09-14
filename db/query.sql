@@ -9,7 +9,6 @@ SELECT id, CONCAT_WS(" ", first_name, last_name) AS Employee_Name FROM employee;
 
 -- Updates:
 UPDATE employee SET role_id = 3 WHERE id = 7;
-UPDATE employee SET ? WHERE ?;
 
 -- Deletes:
 DELETE FROM employee WHERE id = 13;

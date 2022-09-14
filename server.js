@@ -1,7 +1,7 @@
 //call variables to use npm packages
 const express = require('express');
 const sql = require('mysql2');
-const inquirer = require('inquirer');
+const inquirer = require("inquirer");
 const consoleTable = require('console.table');
 //call table variables
 let employee;
@@ -76,7 +76,7 @@ getEmployee = () => {
     db.query('SELECT id, CONCAT_WS(" ", first_name, last_name) AS employee_name FROM employee', (err, res) => {
         if (err) throw err;
         employee = res;
-        consoleTable(employee);
+        console.table(employee);
     })
 };
 
@@ -84,7 +84,7 @@ getRoles = () => {
     db.query('SELECT id, title FROM role', (err, res) => {
         if (err) throw err;
         roles = res;
-        consoleTable(roles);
+        console.table(roles);
     })
 };
 
@@ -92,7 +92,7 @@ getDept = () => {
     db.query('SELECT id, dept_name FROM department', (err, res) => {
         if (err) throw err;
         departments = res;
-        consoleTable(departments);
+        console.table(departments);
     })
 };
 
@@ -100,7 +100,7 @@ getManagers = () => {
     db.query('SELECT id, first_name, last_name, CONCAT_WS(" ", first_name, last_name) AS managers FROM employee', (err, res) => {
         if (err) throw err;
         managers = res;
-        consoleTable(managers);
+        console.table(managers);
     })
 };
 
@@ -109,8 +109,12 @@ addEmployee = () => {
     getRoles();
     getManagers();
     let roleOptions = [];
+    for (let i = 0; i < roles.length; i++) {
+        roleOptions.push(Object(roles[i]));
+    };
+    let managerOptions = [];
     for (let i = 0; i < managers.length; i++) {
-        managerOptions.push(Object(roles[i]));
+        managerOptions.push(Object(managers[i]));
     }
     inquirer.prompt([
     {
@@ -126,12 +130,23 @@ addEmployee = () => {
     {
         name: "role_id",
         type: "list",
+        message: "Enter employees role:",
+        choices: function() {
+            let choiceArr = [];
+            for (let i = 0; i < roleOptions.length; i++) {choiceArr.push(roleOptions[i].title)   
+            }
+            return choiceArr;
+        }
+    },
+    {
+        name: "manager_id",
+        type: "list",
         message: "Enter employees manager:",
         choices: function() {
             let choiceArr = [];
             for (let i = 0; i < managerOptions.length; i++) {choiceArr.push(managerOptions[i].managers)   
             }
-            return choiceArr
+            return choiceArr;
         }
     }
 ]).then(function(answer){
@@ -141,7 +156,8 @@ addEmployee = () => {
         } 
     }
     for (let i = 0; i < managerOptions.length; i++) {
-      if( manager_id = managerOptions[i].id){ 
+      if(managerOptions[i].managers === answer.manager_id){ 
+        manager_id = managerOptions[i].id
             }
         }
         db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${answer.first_name}', '${answer.last_name}', ${role_id}, ${manager_id})`, (err,res)=> {
@@ -210,9 +226,9 @@ addRole = () => {
 };
 //views
 viewEmpl = () => {
-    db.query(`SELECT employee.id, employee.first_name, employee_lastname, department.dept_name AS department, role.title, role.salary, CONCAT_WS(" ", manager.first_name, manager.last_name) AS manager FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY employee.id ASC`, (err, res) => {
+    db.query(`SELECT employee.id, employee.first_name, employee.last_name, department.dept_name AS department, role.title, role.salary, CONCAT_WS(" ", manager.first_name, manager.last_name) AS manager FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY employee.id ASC`, (err, res) => {
         if (err) throw err
-        console.log(err || result);
+        console.log(err || res);
         
         startApp();
     });
@@ -221,7 +237,7 @@ viewEmpl = () => {
 viewRoles = () => {
    db.query(`SELECT role.id, role.title, role.salary, department.dept_name as Department_Name FROM role INNER JOIN department ON role.department_id = department.id`, (err, res)=> {
     if (err) throw err
-    console.log(err || result);
+    console.log(err || res);
     
     startApp();
    });
@@ -230,7 +246,7 @@ viewRoles = () => {
 viewDept = () => {
     db.query("SELECT * FROM department", (err, res) => {
         if (err) throw err
-        console.log(err || results);
+        console.log(err || res);
         
         startApp();
     });
