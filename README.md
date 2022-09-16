@@ -25,7 +25,7 @@
  3. To run through the generated questions that will provide the employee data type npm start in the integrated terminal. 
  4. Answer the questions  that fit your needs and when you are done choose "Exit".
 
-<img src="/Users/monicayuh/Code/Challenges/week-12/employee-tracking/assets/emplTrack.gif"/>
+<img src="assets/emplTrack.gif"/>
 
  ## [Usage](#table-of-contents)
  To create an employee database for companies to have an easy way to keep track of patients.
